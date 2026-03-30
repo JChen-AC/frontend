@@ -7,18 +7,29 @@ import {
   calculateProgress,
 } from "./gameLogic";
 
-export function useGameLogic() {
-  const [board, setBoard] = useState(createSolvedBoard());
+export function useGameLogic(initialBoard = null) {
+  const [board, setBoard] = useState(
+    Array.isArray(initialBoard) && initialBoard.length
+      ? initialBoard
+      : shuffleBoard(createSolvedBoard(), 120)
+  );
   const [moves, setMoves] = useState(0);
   const [time, setTime] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
-  const startGame = (initialBoard) => {
+  useEffect(() => {
+    if (Array.isArray(initialBoard) && initialBoard.length) {
+      setBoard(initialBoard);
+      setProgress(calculateProgress(initialBoard));
+    }
+  }, [initialBoard]);
+
+  const startGame = (boardFromServer) => {
     const boardToUse =
-      initialBoard && Array.isArray(initialBoard)
-        ? initialBoard
+      Array.isArray(boardFromServer) && boardFromServer.length
+        ? boardFromServer
         : shuffleBoard(createSolvedBoard(), 120);
 
     setBoard(boardToUse);

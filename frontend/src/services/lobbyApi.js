@@ -35,11 +35,13 @@ export async function markReady(roomId, playerName) {
     body: JSON.stringify({ roomId, playerName }),
   });
 
+  const data = await res.json();  // 👈 先读 response
+
   if (!res.ok) {
-    throw new Error("Failed to mark ready");
+    throw new Error(data.error || "Failed to mark ready");
   }
 
-  return res.json();
+  return data;
 }
 
 export async function getRoom(roomId) {

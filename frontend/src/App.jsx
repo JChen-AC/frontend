@@ -5,11 +5,14 @@ import { createRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
 
 export default function App() {
   const [screen, setScreen] = useState("lobby");
-  const [roomId, setRoomId] = useState("ROOM-123");
-  const [playerName, setPlayerName] = useState("Player 1");
-  const [opponentName] = useState("Player 2");
+  const [roomId, setRoomId] = useState("");
+  const [playerName, setPlayerName] = useState("");
   const [isReady, setIsReady] = useState(false);
   const [winner, setWinner] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [sharedBoard, setSharedBoard] = useState([]);
+  const [opponentName, setOpponentName] = useState("");
 
   const {
     board,
@@ -20,8 +23,43 @@ export default function App() {
     startGame,
     resetGame,
     handleMove,
-  } = useGameLogic();
+  } = useGameLogic(Array.isArray(sharedBoard) && sharedBoard.length ? sharedBoard : null);
 
+    //polling
+    useEffect(() => {
+    if (!roomId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const room = await getRoom(roomId);
+
+        if (room.player1 === playerName) {
+          setOpponentName(room.player2 || "");
+        } else {
+          setOpponentName(room.player1 || "");
+        }
+
+        // 只初始化一次 shared board
+        if (Array.isArray(room.board) && (!Array.isArray(sharedBoard) || sharedBoard.length === 0)) {
+          setSharedBoard(room.board);
+        }
+
+        // 只要游戏开始了，就进入 game
+        if (room.gameStarted && Array.isArray(room.board) && screen !== "game") {
+          setSharedBoard(room.board);
+          startGame(room.board);
+          setScreen("game");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [roomId, playerName, sharedBoard, screen, startGame]);
+  
+
+  
   // Demo shared board
   const demoInitialBoard = [
     1, 2, 3, 4,
@@ -34,6 +72,9 @@ export default function App() {
 
   const handleCreateRoom = async () => {
     try {
+
+      setError(""); // 👈 清掉旧错误
+
       const room = await createRoom(playerName);
 
       console.log("Created room:", room);
@@ -47,29 +88,46 @@ export default function App() {
 
   const handleJoinRoom = async () => {
     try {
+      setError("");      // 清错误
+      setMessage("");    // 清旧提示
       const room = await joinRoom(roomId, playerName);
       console.log("Joined room:", room);
       setRoomId(room.roomId);
       setScreen("lobby");
+      if (room.player1 === playerName) {
+        setOpponentName(room.player2 || "");
+      } else {
+        setOpponentName(room.player1 || "");
+      }
+      setMessage("Joined room successfully");
     } catch (err) {
-      console.error(err);
+      setError(err.message);
     }
   };
 
   const handleReady = async () => {
     try {
+      setError(""); // 清空旧错误
       const room = await markReady(roomId, playerName);
-
-      console.log("Ready:", room);
-
+      if (room.board) {
+        console.log("Received board:", room.board);
+        setSharedBoard(room.board);
+      }
+      if (room.player1 === playerName) {
+        setOpponentName(room.player2 || "");
+      } else {
+        setOpponentName(room.player1 || "");
+      }
       setIsReady(true);
 
-      setTimeout(() => {
+      if (room.gameStarted && room.board) {
+        setSharedBoard(room.board);
+        startGame(room.board);
         setScreen("game");
-      }, 500);
+      }
 
     } catch (err) {
-      console.error(err);
+       setError(err.message); // 👈 显示后端错误
     }
   };
 
@@ -107,6 +165,8 @@ export default function App() {
           onJoinRoom={handleJoinRoom}
           onReady={handleReady}
           isReady={isReady}
+          error={error}
+          message={message}
         />
       )}
 
@@ -146,11 +206,12 @@ function LobbyScreen({
   onJoinRoom,
   onReady,
   isReady,
+  error,
+  message,
 }) {
   return (
+    
     <div className="card">
-      <h2>Lobby</h2>
-
       <label className="label">Player Name</label>
       <input
         className="input"
@@ -169,11 +230,13 @@ function LobbyScreen({
         <p><strong>Room ID:</strong> {roomId}</p>
       </div>
 
+      {message && <p style={{ color: "green" }}>{message}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <div className="button-row">
         <button className="btn" onClick={onCreateRoom}>Create Room</button>
         <button className="btn secondary" onClick={onJoinRoom}>Join Room</button>
-      </div>
 
+      </div>
       <button className="btn ready" onClick={onReady} disabled={isReady}>
         {isReady ? "Waiting for Player 2..." : "Ready"}
       </button>
@@ -261,3 +324,4 @@ function ResultScreen({ winner, playerName, moves, time, onPlayAgain }) {
     </div>
   );
 }
+

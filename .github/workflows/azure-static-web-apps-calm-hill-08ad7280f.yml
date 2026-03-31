@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     env: # Declare environment variables here
-      VITE_LOBBY_URL : lobby15-ezbebefxgyfpcmbe.canadacentral-01.azurewebsites.net
+      VITE_LOBBY_URL : https://lobby15-ezbebefxgyfpcmbe.canadacentral-01.azurewebsites.net/
     steps:
       - uses: actions/checkout@v3
         with:

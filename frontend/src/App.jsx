@@ -1,16 +1,15 @@
-import { useState, useEffect, useImperativeHandle } from "react";
+import { useState, useEffect } from "react";
 import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
-import { createRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
+import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
 import { DbConnection, reducers } from "./module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export default function App() {
-  const conn = useSpacetimeDB<DbConnection>();
-
-  const create_reducer = useReducer(reducers.create_room_reducers);
-  const join_reducer = useReducer(reducers.join_room_reducers);
-  const ready_reducer = useImperativeHandle(reducers.set_player_ready_reducer);
+  const conn = useSpacetimeDB();
+  const create_reducer = useReducer(reducers.createRoom);
+  const join_reducer = useReducer(reducers.joinRoom);
+  const ready_reducer = useReducer(reducers.setPlayerReady);
   const [screen, setScreen] = useState("lobby");
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -82,7 +81,7 @@ export default function App() {
 
       setError(""); // 👈 清掉旧错误
 
-      const room = await createRoom(playerName);
+      const room = await createLobbyRoom(playerName);
 
       console.log("Created room:", room);
 
@@ -132,8 +131,7 @@ export default function App() {
       setIsReady(true);
 
       if (room.gameStarted && room.board) {
-        ready_reducer({roomCode:roomId})
-        const start = useReducer(reducers.set_player_ready_reducer)
+        ready_reducer({roomCode:roomId,isReady:true})        
         setSharedBoard(room.board);
         startGame(room.board);
         setScreen("game");

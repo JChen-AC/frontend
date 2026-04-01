@@ -7,15 +7,18 @@ import { SpacetimeDBProvider } from "spacetimedb/react";
 
 const connectionBuilder = DbConnection.builder()
   .withUri("ws://localhost:3000")
-  .withModuleName("15-puzzle")
+  .withDatabaseName ("15puzzle-db1")
   .onConnect((conn, identity, token)=>{
     console.log("Connected! Identity:", identity.toHexString());
-
+    conn.subscriptionBuilder().subscribe([
+      'SELECT * FROM room',
+      'SELECT * FROM player',
+    ]);
   })
     .onDisconnect(() => {
     console.log("Disconnected from SpacetimeDB");
   })
-  .onError((err) => {
+  .onConnectError((err) => {
     console.error("Connection error:", err);
   });
 

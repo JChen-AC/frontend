@@ -10,7 +10,7 @@ import { DbConnection, reducers } from "../module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export function useGameLogic(initialBoard = null) {
-  const mark_endtime = useReducer(reducers.mark_puzzle_completed_reducer)
+  const mark_endtime = useReducer(reducers.markPuzzleCompleted)
   const [board, setBoard] = useState(
     Array.isArray(initialBoard) && initialBoard.length
       ? initialBoard

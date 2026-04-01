@@ -159,6 +159,10 @@ body {
   flex-wrap: wrap;
 }
 
+.boards-layout h2 {
+  color: black;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(4, 82px);

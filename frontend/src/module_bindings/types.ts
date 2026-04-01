@@ -16,6 +16,7 @@ export const GameBoard = __t.object("GameBoard", {
   playerId: __t.identity(),
   boardState: __t.string(),
   updatedAt: __t.timestamp(),
+  moveCount: __t.i32(),
   isCompleted: __t.bool(),
 });
 export type GameBoard = __Infer<typeof GameBoard>;
@@ -46,6 +47,12 @@ export const Room = __t.object("Room", {
   tileOrder: __t.array(__t.u16()),
 });
 export type Room = __Infer<typeof Room>;
+
+export const TimeAndPlayerName = __t.object("TimeAndPlayerName", {
+  time: __t.f64(),
+  playerName: __t.string(),
+});
+export type TimeAndPlayerName = __Infer<typeof TimeAndPlayerName>;
 
 export const Timer = __t.object("Timer", {
   timerId: __t.u64(),

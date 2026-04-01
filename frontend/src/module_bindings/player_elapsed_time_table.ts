@@ -11,11 +11,6 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  boardId: __t.u64().primaryKey().name("board_id"),
-  roomId: __t.u64().name("room_id"),
-  playerId: __t.identity().name("player_id"),
-  boardState: __t.string().name("board_state"),
-  updatedAt: __t.timestamp().name("updated_at"),
-  moveCount: __t.i32().name("move_count"),
-  isCompleted: __t.bool().name("is_completed"),
+  time: __t.f64(),
+  playerName: __t.string().name("player_name"),
 });

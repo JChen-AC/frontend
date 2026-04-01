@@ -48,6 +48,7 @@ import UpdateGameBoardReducer from "./update_game_board_reducer";
 import GameBoardRow from "./game_board_table";
 import GameTimerRow from "./game_timer_table";
 import PlayerRow from "./player_table";
+import PlayerElapsedTimeRow from "./player_elapsed_time_table";
 import RoomRow from "./room_table";
 
 /** Type-only namespace exports for generated type groups. */
@@ -88,14 +89,25 @@ const tablesSchema = __schema({
       { accessor: 'PlayerId', name: 'player_player_id_idx_btree', algorithm: 'btree', columns: [
         'playerId',
       ] },
+      { accessor: 'by_room', name: 'player_room_id_idx_btree', algorithm: 'btree', columns: [
+        'roomId',
+      ] },
+      { accessor: 'UserId', name: 'player_user_id_idx_btree', algorithm: 'btree', columns: [
+        'userId',
+      ] },
     ],
     constraints: [
       { name: 'player_player_id_key', constraint: 'unique', columns: ['playerId'] },
+      { name: 'player_user_id_key', constraint: 'unique', columns: ['userId'] },
     ],
   }, PlayerRow),
   Room: __table({
     name: 'room',
     indexes: [
+      { accessor: 'by_Players', name: 'room_current_players_max_players_idx_btree', algorithm: 'btree', columns: [
+        'currentPlayers',
+        'maxPlayers',
+      ] },
       { accessor: 'RoomCode', name: 'room_room_code_idx_btree', algorithm: 'btree', columns: [
         'roomCode',
       ] },
@@ -108,6 +120,13 @@ const tablesSchema = __schema({
       { name: 'room_room_id_key', constraint: 'unique', columns: ['roomId'] },
     ],
   }, RoomRow),
+  PlayerElapsedTime: __table({
+    name: 'player_elapsed_time',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, PlayerElapsedTimeRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */

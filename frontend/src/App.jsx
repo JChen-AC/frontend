@@ -1,9 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useImperativeHandle } from "react";
 import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
 import { createRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
+import { DbConnection, reducers } from "./module_bindings";
+import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export default function App() {
+  const conn = useSpacetimeDB<DbConnection>();
+
+  const create_reducer = useReducer(reducers.create_room_reducers);
+  const join_reducer = useReducer(reducers.join_room_reducers);
+  const ready_reducer = useImperativeHandle(reducers.set_player_ready_reducer);
   const [screen, setScreen] = useState("lobby");
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -81,6 +88,8 @@ export default function App() {
 
       setRoomId(room.roomId);
       setScreen("lobby");
+      const MAX_PLAYERS =2;
+      create_reducer({roomCode:room.roomId,maxPlayers:MAX_PLAYERS,playerName:playerName})
     } catch (err) {
       console.error(err);
     }
@@ -100,6 +109,8 @@ export default function App() {
         setOpponentName(room.player1 || "");
       }
       setMessage("Joined room successfully");
+     
+      join_reducer({roomCode:room.roomId,playerName:playerName});
     } catch (err) {
       setError(err.message);
     }
@@ -121,6 +132,8 @@ export default function App() {
       setIsReady(true);
 
       if (room.gameStarted && room.board) {
+        ready_reducer({roomCode:roomId})
+        const start = useReducer(reducers.set_player_ready_reducer)
         setSharedBoard(room.board);
         startGame(room.board);
         setScreen("game");
@@ -131,7 +144,7 @@ export default function App() {
     }
   };
 
-  const handleTileClick = (index) => {
+  const handleTileClick = (index) => {    
     handleMove(index);
   };
 

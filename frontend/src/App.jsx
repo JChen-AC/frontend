@@ -169,7 +169,9 @@ export default function App() {
       }
       setMessage("Joined room successfully");
       
-      playerSubscription = conn.subscribe(tables.player.where((q) => q.roomCode.eq(roomId)), {
+      join_reducer({roomCode:room.roomId,playerName:playerName});
+
+      playerSubscription = conn.subscribe(tables?.player?.where((q) => q.roomCode.eq(roomId)), {
         onInsert: (player, reducerEvent) => {console.log("Player joined:", player);
           if (player.playerName !== playerName) {
             setOpponentName(player.playerName);
@@ -188,7 +190,6 @@ export default function App() {
         }
 
       });
-      join_reducer({roomCode:room.roomId,playerName:playerName});
     } catch (err) {
       setError(err.message);
     }

@@ -52,6 +52,11 @@ function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }
     console.log("Looking up playerId for", opponentName, "in room", roomId);
     console.log("All players:", [...(tables?.Player ?? [])]);
 
+      // Try different ways to read rows
+    console.log("attempt .all():", tables.Player?.all?.());
+    console.log("attempt .iter():", tables.Player?.iter?.());
+    console.log("attempt Array.from:", Array.from(tables.Player ?? []));
+
     const allPlayers = [...(tables?.Player ?? [])];
     const opponent = allPlayers.find(
       (p) => p.playerName === opponentName && String(p.roomId) === String(roomId)

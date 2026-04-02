@@ -6,26 +6,10 @@ import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyA
 import { DbConnection, reducers, tables } from "./module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
-export default function App() {
-  const conn = useSpacetimeDB();
-  const create_reducer = useReducer(reducers.createRoom);
-  const join_reducer = useReducer(reducers.joinRoom);
-  const ready_reducer = useReducer(reducers.setPlayerReady);
-  const [screen, setScreen] = useState("lobby");
-  const [roomId, setRoomId] = useState("");
-  const [playerName, setPlayerName] = useState("");
-  const [isReady, setIsReady] = useState(false);
-  const [winner, setWinner] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [sharedBoard, setSharedBoard] = useState([]);
-  const [opponentName, setOpponentName] = useState("");
-  let playerSubscription=null;
-  
   // Add this new component
 function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave, setMessage }) {
   useTable(
-    tables.player.where((q) => q.roomCode.eq(roomId)),
+    tables?.player?.where((q) => q.roomCode.eq(roomId)),
     {
       onInsert: (player) => {
         if (player.playerName !== playerName) {
@@ -47,6 +31,24 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
   );
   return null;
 }
+
+
+export default function App() {
+  const conn = useSpacetimeDB();
+  const create_reducer = useReducer(reducers.createRoom);
+  const join_reducer = useReducer(reducers.joinRoom);
+  const ready_reducer = useReducer(reducers.setPlayerReady);
+  const [screen, setScreen] = useState("lobby");
+  const [roomId, setRoomId] = useState("");
+  const [playerName, setPlayerName] = useState("");
+  const [isReady, setIsReady] = useState(false);
+  const [winner, setWinner] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [sharedBoard, setSharedBoard] = useState([]);
+  const [opponentName, setOpponentName] = useState("");
+  let playerSubscription=null;
+  
 
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);

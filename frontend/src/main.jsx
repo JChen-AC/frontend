@@ -16,7 +16,7 @@ const connectionBuilder = DbConnection.builder()
     conn.subscriptionBuilder().subscribe([
       'SELECT * FROM room',
       'SELECT * FROM player',
-      'SELECT * FROM ',
+      'SELECT * FROM GameBoard',
     ]);
   })
     .onDisconnect(() => {

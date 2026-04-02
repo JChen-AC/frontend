@@ -72,7 +72,7 @@ export function useGameLogic(initialBoard = null) {
     if (newBoard !== board) {
       setBoard(newBoard);
       setMoves((m) => m + 1);
-      update_db_board({roomCode:roomCode,boardState:board})
+      update_db_board({roomCode:roomCode,boardState:newBoard})
 
       const p = calculateProgress(newBoard);
       setProgress(p);

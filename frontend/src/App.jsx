@@ -6,6 +6,25 @@ import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyA
 import { DbConnection, reducers, tables } from "./module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
+
+useTable(
+  tables?.Player?.where((q) => q.roomId.eq(roomId)),
+  {
+    onInsert: (row) => {
+      console.log("🟢 [Player INSERT]", JSON.stringify(row, null, 2));
+    },
+    onUpdate: (oldRow, newRow) => {
+      console.log("🟡 [Player UPDATE]", {
+        old: oldRow,
+        new: newRow
+      });
+    },
+    onDelete: (row) => {
+      console.log("🔴 [Player DELETE]", row);
+    }
+  }
+);
+
   // Add this new component
 function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave, setMessage }) {
   useTable(

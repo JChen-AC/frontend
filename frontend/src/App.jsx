@@ -34,40 +34,69 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
 
 function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
   const [opponentPlayerId, setOpponentPlayerId] = useState(null);
-  const [found, setFound] = useState(false); // 👈 prevents re-setting
+  const [found, setFound] = useState(false);
+
+  console.log("OpponentBoardSubscriber render", {
+    roomId,
+    opponentName,
+    opponentPlayerId,
+    found
+  });
 
   useTable(
     tables?.Player?.where((q) => q.roomId.eq(roomId)),
-    {      
+    {
       onInsert: (player) => {
-        console.log("Subscription created: Results gotten")
+        console.log("🟢 Player INSERT:", player);
+
         if (!found && player.playerName === opponentName) {
-          console.log("Player found")
+          console.log("✅ Found opponent (insert):", player);
           setOpponentPlayerId(player.playerId);
-          setFound(true); // 👈 lock it
+          setFound(true);
         }
       },
+
       onUpdate: (oldPlayer, newPlayer) => {
+        console.log("🟡 Player UPDATE:", { oldPlayer, newPlayer });
+
         if (!found && newPlayer.playerName === opponentName) {
-          console.log("Update Player found")
+          console.log("✅ Found opponent (update):", newPlayer);
           setOpponentPlayerId(newPlayer.playerId);
           setFound(true);
         }
+      },
+
+      onDelete: (player) => {
+        console.log("🔴 Player DELETE:", player);
       }
     }
   );
 
-  return opponentPlayerId ? (
+  useEffect(() => {
+    console.log("🎯 opponentPlayerId changed:", opponentPlayerId);
+  }, [opponentPlayerId]);
+
+  if (!opponentPlayerId) {
+    console.log("⛔ Waiting for opponentPlayerId...");
+    return null;
+  }
+
+  console.log("🚀 Rendering GameBoardSubscriber with:", opponentPlayerId);
+
+  return (
     <GameBoardSubscriber
       roomId={roomId}
       opponentPlayerId={opponentPlayerId}
       onOpponentBoardUpdate={onOpponentBoardUpdate}
     />
-  ) : null;
+  );
 }
 
 function GameBoardSubscriber({ roomId, opponentPlayerId, onOpponentBoardUpdate }) {
-  console.log("GameBoardSubscriber mounting with", { roomId, opponentPlayerId });
+  console.log("🎮 GameBoardSubscriber MOUNT", {
+    roomId,
+    opponentPlayerId
+  });
 
   useTable(
     tables?.GameBoard?.where((q) =>
@@ -75,18 +104,35 @@ function GameBoardSubscriber({ roomId, opponentPlayerId, onOpponentBoardUpdate }
     ),
     {
       onInsert: (row) => {
-        console.log("GameBoard inserted:", row);
-        onOpponentBoardUpdate(JSON.parse(row.boardState), row.moveCount);
+        console.log("🟢 GameBoard INSERT:", row);
+
+        try {
+          const parsed = JSON.parse(row.boardState);
+          console.log("✅ Parsed board:", parsed);
+
+          onOpponentBoardUpdate(parsed, row.moveCount);
+        } catch (err) {
+          console.error("❌ Failed to parse boardState:", row.boardState);
+        }
       },
+
       onUpdate: (oldRow, newRow) => {
-        console.log("GameBoard updated:", newRow);
-        onOpponentBoardUpdate(JSON.parse(newRow.boardState), newRow.moveCount);
+        console.log("🟡 GameBoard UPDATE:", newRow);
+
+        try {
+          const parsed = JSON.parse(newRow.boardState);
+          console.log("✅ Parsed updated board:", parsed);
+
+          onOpponentBoardUpdate(parsed, newRow.moveCount);
+        } catch (err) {
+          console.error("❌ Failed to parse updated boardState:", newRow.boardState);
+        }
       }
     }
   );
+
   return null;
 }
-
 
 
 export default function App() {

@@ -16,9 +16,11 @@ const connectionBuilder = DbConnection.builder()
     localStorage.setItem(TOKEN_KEY, token);
     console.log("Connected! Identity:", identity.toHexString());
     conn.subscriptionBuilder().subscribe([
-      'SELECT * FROM room',
-      'SELECT * FROM player',
+      'SELECT * FROM Player',
+      'SELECT * FROM Room',
       'SELECT * FROM GameBoard',
+      'SELECT * FROM GameTimer',
+      'SELECT * FROM PlayerElapsedTime',
     ]);
   })
     .onDisconnect(() => {

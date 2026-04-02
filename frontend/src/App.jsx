@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useMemo } from "react";
 import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
 import { getMovableTiles, moveTile, calculateProgress } from "./logic/gameLogic";  

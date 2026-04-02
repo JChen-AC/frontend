@@ -38,15 +38,18 @@ function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }
 
   useTable(
     tables?.Player?.where((q) => q.roomId.eq(roomId)),
-    {
+    {      
       onInsert: (player) => {
+        console.log("Subscription created: Results gotten")
         if (!found && player.playerName === opponentName) {
+          console.log("Player found")
           setOpponentPlayerId(player.playerId);
           setFound(true); // 👈 lock it
         }
       },
       onUpdate: (oldPlayer, newPlayer) => {
         if (!found && newPlayer.playerName === opponentName) {
+          console.log("Update Player found")
           setOpponentPlayerId(newPlayer.playerId);
           setFound(true);
         }

@@ -4,7 +4,7 @@
 
 body {
   margin: 0;
-  font-family: 'Nunito', sans-serif;
+  font-family: "Nunito", sans-serif;
   background: linear-gradient(180deg, #f8f9fc 0%, #eef2f9 100%);
   min-height: 100vh;
   color: #222;
@@ -54,6 +54,7 @@ body {
   outline: none;
   background: #fff;
   transition: 0.2s ease;
+  color: #222;
 }
 
 .input:focus {
@@ -151,6 +152,18 @@ body {
   text-align: center;
 }
 
+.boards-layout {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.boards-layout h2 {
+  color: black;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(4, 82px);
@@ -163,13 +176,53 @@ body {
   border: 2px solid #e6ebf3;
 }
 
+.board-small {
+  grid-template-columns: repeat(4, 32px);
+  gap: 4px;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.player-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 260px;
+}
+
+.stats-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 320px;
+
+  box-shadow: 0 10px 24px rgba(20, 20, 40, 0.08);
+  border: 2px solid #ececec;
+
+  color: #222;
+  text-align: left;
+}
+
+.stats-card h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #111;
+}
+
+.stats-card p {
+  margin: 6px 0;
+  font-size: 1rem;
+}
+
 .tile {
   width: 80px;
   height: 80px;
   border-radius: 20px;
   font-size: 26px;
   font-weight: 800;
-  font-family: 'Nunito', sans-serif;
+  font-family: "Nunito", sans-serif;
   color: #222;
   border: 3px solid transparent;
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
@@ -179,6 +232,15 @@ body {
 
 .tile:hover {
   transform: translateY(-2px);
+}
+
+.tile-small {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12);
+  cursor: default;
 }
 
 .tile:nth-child(4n + 1) {
@@ -263,14 +325,8 @@ body {
     font-size: 2.6rem;
   }
 
-  .board {
-    grid-template-columns: repeat(4, 68px);
-    gap: 10px;
-  }
-
-  .tile {
-    width: 68px;
-    height: 68px;
-    font-size: 24px;
+  .boards-layout {
+    flex-direction: column;
+    align-items: center;
   }
 }

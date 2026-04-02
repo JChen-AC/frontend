@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
-import { createRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
+import { getMovableTiles, moveTile, calculateProgress } from "./logic/gameLogic";  
+import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
+import { DbConnection, reducers } from "./module_bindings";
+import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export default function App() {
+  const conn = useSpacetimeDB();
+  const create_reducer = useReducer(reducers.createRoom);
+  const join_reducer = useReducer(reducers.joinRoom);
+  const ready_reducer = useReducer(reducers.setPlayerReady);
   const [screen, setScreen] = useState("lobby");
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -13,6 +20,10 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
+  const [opponentBoard, setOpponentBoard] = useState([]);
+  const [opponentProgress, setOpponentProgress] = useState(0);
+  const [opponentMoves, setOpponentMoves] = useState(0);
+  const [opponentTime, setOpponentTime] = useState(0);
 
   const {
     board,
@@ -47,6 +58,8 @@ export default function App() {
         // 只要游戏开始了，就进入 game
         if (room.gameStarted && Array.isArray(room.board) && screen !== "game") {
           setSharedBoard(room.board);
+          setOpponentBoard(room.board); // temporary placeholder until SpaceTimeDB
+          setOpponentProgress(calculateProgress(room.board));
           startGame(room.board);
           setScreen("game");
         }
@@ -58,6 +71,29 @@ export default function App() {
     return () => clearInterval(interval);
   }, [roomId, playerName, sharedBoard, screen, startGame]);
   
+  useEffect(() => {
+  if (screen !== "game" || !Array.isArray(opponentBoard) || opponentBoard.length === 0) {
+    return;
+  }
+
+  const interval = setInterval(() => {
+    setOpponentBoard((currentBoard) => {
+      if (!Array.isArray(currentBoard) || currentBoard.length === 0) return currentBoard;
+
+      const possibleMoves = getMovableTiles(currentBoard);
+      if (!possibleMoves.length) return currentBoard;
+
+      const randomMove =
+        possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+
+      const updatedBoard = moveTile(currentBoard, randomMove);
+      setOpponentProgress(calculateProgress(updatedBoard));
+      return updatedBoard;
+    });
+  }, 2000);
+
+  return () => clearInterval(interval);
+  }, [screen, opponentBoard]);
 
   
   // Demo shared board
@@ -68,19 +104,20 @@ export default function App() {
     13, 0, 14, 15,
   ];
 
-  const opponentProgress = Math.min(progress + 10, 100);
 
   const handleCreateRoom = async () => {
     try {
 
       setError(""); // 👈 清掉旧错误
 
-      const room = await createRoom(playerName);
+      const room = await createLobbyRoom(playerName);
 
       console.log("Created room:", room);
 
       setRoomId(room.roomId);
       setScreen("lobby");
+      const MAX_PLAYERS =2;
+      create_reducer({roomCode:room.roomId,maxPlayers:MAX_PLAYERS,playerName:playerName})
     } catch (err) {
       console.error(err);
     }
@@ -100,6 +137,8 @@ export default function App() {
         setOpponentName(room.player1 || "");
       }
       setMessage("Joined room successfully");
+     
+      join_reducer({roomCode:room.roomId,playerName:playerName});
     } catch (err) {
       setError(err.message);
     }
@@ -121,9 +160,12 @@ export default function App() {
       setIsReady(true);
 
       if (room.gameStarted && room.board) {
-        setSharedBoard(room.board);
-        startGame(room.board);
-        setScreen("game");
+      ready_reducer({roomCode:roomId,isReady:true})        
+      setSharedBoard(room.board);
+      setOpponentBoard(room.board); // temporary placeholder until SpaceTimeDB
+      setOpponentProgress(calculateProgress(room.board));
+      startGame(room.board);
+      setScreen("game");
       }
 
     } catch (err) {
@@ -131,16 +173,20 @@ export default function App() {
     }
   };
 
-  const handleTileClick = (index) => {
-    handleMove(index);
+  const handleTileClick = (index) => {    
+    handleMove(index,roomId);
   };
 
   const handleBackToLobby = () => {
     resetGame();
     setIsReady(false);
     setWinner("");
+    setOpponentBoard([]);
+    setOpponentProgress(0);
+    setOpponentMoves(0);
+    setOpponentTime(0);
     setScreen("lobby");
-  };
+};
 
   useEffect(() => {
     if (isFinished && screen === "game" && !winner) {
@@ -171,18 +217,21 @@ export default function App() {
       )}
 
       {screen === "game" && (
-        <GameScreen
-          roomId={roomId}
-          playerName={playerName}
-          opponentName={opponentName}
-          board={board}
-          moves={moves}
-          time={time}
-          myProgress={progress}
-          opponentProgress={opponentProgress}
-          onTileClick={handleTileClick}
-        />
-      )}
+      <GameScreen
+        roomId={roomId}
+        playerName={playerName}
+        opponentName={opponentName}
+        board={board}
+        opponentBoard={opponentBoard}
+        opponentMoves={opponentMoves}
+        opponentTime={opponentTime}
+        moves={moves}
+        time={time}
+        myProgress={progress}
+        opponentProgress={opponentProgress}
+        onTileClick={handleTileClick}
+      />
+    )}
 
       {screen === "result" && (
         <ResultScreen
@@ -249,43 +298,75 @@ function GameScreen({
   playerName,
   opponentName,
   board,
+  opponentBoard,
   moves,
   time,
+  opponentMoves,
+  opponentTime,
   myProgress,
   opponentProgress,
   onTileClick,
 }) {
   return (
-    <div className="game-layout">
-      <div className="left-panel card">
-        <h2>Game Info</h2>
-        <p><strong>Room:</strong> {roomId}</p>
-        <p><strong>You:</strong> {playerName}</p>
-        <p><strong>Opponent:</strong> {opponentName}</p>
-        <p><strong>Moves:</strong> {moves}</p>
-        <p><strong>Time:</strong> {time}s</p>
+    <div className="game-screen">
+      <div className="boards-layout">
+        {/* YOUR SIDE */}
+        <div className="player-column">
+          <div className="stats-card">
+            <h2>Your Stats</h2>
 
-        <ProgressBar label="Your Progress" value={myProgress} />
-        <ProgressBar label="Opponent Progress" value={opponentProgress} />
-      </div>
+            <p><strong>Room:</strong> {roomId}</p>
+            <p><strong>Name:</strong> {playerName}</p>
+            <p><strong>Moves:</strong> {moves}</p>
+            <p><strong>Time:</strong> {time}s</p>
 
-      <div className="board-panel card">
-        <h2>Your Board</h2>
-        <PuzzleBoard board={board} onTileClick={onTileClick} />
+            <ProgressBar label="Your Progress" value={myProgress} />
+          </div>
+
+          <h2>Your Board</h2>
+          <PuzzleBoard board={board} onTileClick={onTileClick} />
+        </div>
+
+        {/* OPPONENT SIDE */}
+        <div className="player-column">
+          <div className="stats-card">
+            <h2>Opponent Stats</h2>
+
+            <p>
+              <strong>Name:</strong>{" "}
+              {opponentName || "Waiting..."}
+            </p>
+
+            <p><strong>Moves:</strong> {opponentMoves}</p>
+            <p><strong>Time:</strong> {opponentTime}s</p>
+
+            <ProgressBar
+              label="Opponent Progress"
+              value={opponentProgress}
+            />
+          </div>
+
+          <h2>{opponentName || "Opponent"}'s Board</h2>
+          <PuzzleBoard board={opponentBoard} small readOnly />
+        </div>
       </div>
     </div>
   );
 }
 
-function PuzzleBoard({ board, onTileClick }) {
+function PuzzleBoard({ board, onTileClick, small = false, readOnly = false }) {
   return (
-    <div className="board">
+    <div className={`board ${small ? "board-small" : ""}`}>
       {board.map((tile, index) => (
         <button
           key={index}
-          className={`tile ${tile === 0 ? "empty" : ""}`}
-          onClick={() => tile !== 0 && onTileClick(index)}
-          disabled={tile === 0}
+          className={`tile ${small ? "tile-small" : ""} ${tile === 0 ? "empty" : ""}`}
+          onClick={() => {
+            if (!readOnly && tile !== 0 && onTileClick) {
+              onTileClick(index);
+            }
+          }}
+          disabled={readOnly || tile === 0}
         >
           {tile !== 0 ? tile : ""}
         </button>

@@ -45,7 +45,7 @@ function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }
 
     console.log("OpponentBoardSubscriber: looking up playerId for", opponentName, "in room", roomId);
 
-    const players = conn.db.player
+    const players = tables.player
       .where((q) => q.roomId.eq(roomId).and(q.playerName.eq(opponentName)))
       .collect();
 

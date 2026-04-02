@@ -16,7 +16,7 @@ jobs:
     name: Build and Deploy Job
     env: # Declare environment variables here
       VITE_LOBBY_URL : https://lobby15-ezbebefxgyfpcmbe.canadacentral-01.azurewebsites.net/
-      VITE_SPACETIME_URL : ws://40.85.218.111
+      VITE_SPACETIME_URL : wss://15puzzlesdb.duckdns.org
       VITE_DB_NAME : 15puzzle-db1
     steps:
       - uses: actions/checkout@v3

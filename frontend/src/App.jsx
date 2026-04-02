@@ -250,16 +250,7 @@ export default function App() {
       <header className="header">
         <h1>1v1 15 Puzzle</h1>
       </header>
-      {/* Only subscribes when roomId is set */}
-      {roomId && (
-        <PlayerSubscriber
-          roomId={roomId}
-          playerName={playerName}
-          onOpponentJoin={setOpponentName}
-          onOpponentLeave={() => setOpponentName("")}
-          setMessage={setMessage}
-        />
-      )}
+      {/* Only subscribes when roomId is set */}    
       {screen === "lobby" && (
         <LobbyScreen
           playerName={playerName}

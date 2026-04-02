@@ -12,6 +12,8 @@ const TOKEN_KEY = `${SPACETIME_URL}/${DB_NAME}/auth_token`;
 const connectionBuilder = DbConnection.builder()
   .withUri(SPACETIME_URL)
   .withDatabaseName (DB_NAME)
+  .withLightMode(true)
+  .withCompression("gzip")
   .onConnect((ctx, identity, token)=>{
     localStorage.setItem(TOKEN_KEY, token);
     console.log("Connected! Identity:", identity.toHexString());
@@ -24,12 +26,8 @@ const connectionBuilder = DbConnection.builder()
     .subscribe([
       'SELECT * FROM Player',
       'SELECT * FROM Room',
-      'SELECT * FROM GameBoard',
     ]);
 
-    ctx.db.Player.onInsert((ctx, newPlayer) => {
-      console.log("Player table updated:", newPlayer);
-    });
   })
     .onDisconnect(() => {
     console.log("Disconnected from SpacetimeDB");

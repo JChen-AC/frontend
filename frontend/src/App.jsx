@@ -8,19 +8,19 @@ import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 
 useTable(
-  tables?.Player?.where((q) => q.roomId.eq(roomId)),
+  tables?.Player,
   {
     onInsert: (row) => {
-      console.log("🟢 [Player INSERT]", JSON.stringify(row, null, 2));
+      console.log("🟢 [ANY Player INSERT]", JSON.stringify(row, null, 2));
     },
     onUpdate: (oldRow, newRow) => {
-      console.log("🟡 [Player UPDATE]", {
+      console.log("🟡 [ANY Player UPDATE]", {
         old: oldRow,
         new: newRow
       });
     },
     onDelete: (row) => {
-      console.log("🔴 [Player DELETE]", row);
+      console.log("🔴 [ANY Player DELETE]", row);
     }
   }
 );

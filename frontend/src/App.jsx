@@ -6,7 +6,7 @@ import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyA
 import { DbConnection, reducers, tables } from "./module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
-  // Add this new component
+/*  // Add this new component
 function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave, setMessage }) {
   useTable(
     tables?.player?.where((q) => q.roomCode.eq(roomId)),
@@ -31,7 +31,7 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
   );
   return null;
 }
-
+*/
 
 export default function App() {
   const conn = useSpacetimeDB();
@@ -47,8 +47,42 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
-  let playerSubscription=null;
-  
+
+  const [gameBoardTable] = useTable(tables.GameBoard,
+    {
+      onUpdate: ( oldBoard, newBoard) => {
+        console.log("GameBoard onUpdate called", { oldBoard, newBoard, roomId });
+        if(!roomId || !newBoard) return;
+        console.log("GameBoard updated");
+        console.log("Board state:", newBoard.boardState);
+        if (newBoard.boardState) {
+          const strBoard = newBoard.boardState;
+          const arrBoard = strBoard.split(',').map(Number);
+          console.log("Parsed board:", arrBoard);
+          // Update your local game state here if needed
+          setSharedBoard(arrBoard);
+        }
+      },
+      onInsert: ( gameBoard) => {
+        console.log("GameBoard onInsert called", { gameBoard, roomId });
+        if(!roomId || !gameBoard) return;
+        console.log("GameBoard inserted");
+        console.log("Board state:", gameBoard.boardState);
+        if (gameBoard.boardState) {
+          const strBoard = gameBoard.boardState;
+          const arrBoard = strBoard.split(',').map(Number);
+          console.log("GameBoard inserted:", arrBoard);
+          // Update your local game state here
+          setSharedBoard(arrBoard);
+        }
+      },
+      onDelete: ( gameBoard) => {
+        console.log("GameBoard onDelete called", { gameBoard, roomId });
+        if(!roomId || !gameBoard) return;
+        console.log("GameBoard deleted:", gameBoard.boardState);
+      }
+    }
+  );
 
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);
@@ -145,9 +179,12 @@ export default function App() {
       console.log("Created room:", room);
 
       setRoomId(room.roomId);
+      console.log("Room ID:", room.roomId);
       setScreen("lobby");
+      console.log("change screen to lobby");
       const MAX_PLAYERS =2;
       create_reducer({roomCode:room.roomId,maxPlayers:MAX_PLAYERS,playerName:playerName})
+      console.log("Reducer dispatched for room creation");
     } catch (err) {
       console.error(err);
     }
@@ -251,15 +288,6 @@ export default function App() {
         <h1>1v1 15 Puzzle</h1>
       </header>
       {/* Only subscribes when roomId is set */}
-      {roomId && (
-        <PlayerSubscriber
-          roomId={roomId}
-          playerName={playerName}
-          onOpponentJoin={setOpponentName}
-          onOpponentLeave={() => setOpponentName("")}
-          setMessage={setMessage}
-        />
-      )}
       {screen === "lobby" && (
         <LobbyScreen
           playerName={playerName}

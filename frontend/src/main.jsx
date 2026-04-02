@@ -25,8 +25,6 @@ const connectionBuilder = DbConnection.builder()
       'SELECT * FROM Player',
       'SELECT * FROM Room',
       'SELECT * FROM GameBoard',
-      'SELECT * FROM GameTimer',
-      'SELECT * FROM PlayerElapsedTime',
     ]);
   })
     .onDisconnect(() => {

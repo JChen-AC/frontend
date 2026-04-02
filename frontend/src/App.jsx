@@ -20,8 +20,9 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
+  let playerSubscription=null;
   
-  // Only subscribe to players table when we have a valid roomId
+  /*// Only subscribe to players table when we have a valid roomId
   const [playersTable] = useTable(
     tables.player.where((q) => q.roomCode.eq(roomId)),
     {
@@ -48,7 +49,7 @@ export default function App() {
         }
       }
     }
-  )
+  )*/
 
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);
@@ -167,7 +168,26 @@ export default function App() {
         setOpponentName(room.player1 || "");
       }
       setMessage("Joined room successfully");
-     
+      
+      playerSubscription = conn.subscribe(tables.player.where((q) => q.roomCode.eq(roomId)), {
+        onInsert: (player, reducerEvent) => {console.log("Player joined:", player);
+          if (player.playerName !== playerName) {
+            setOpponentName(player.playerName);
+          }
+        },
+        onUpdate: (oldPlayer, newPlayer, reducerEvent) => {console.log("Player updated:", { oldPlayer, newPlayer });
+          if (newPlayer.playerName !== playerName && newPlayer.playerName !== opponentName) {
+            setOpponentName(newPlayer.playerName);
+          }
+        },
+        onDelete: (player, reducerEvent) => {console.log("Player left:", player);
+          if (player.playerName === opponentName) {
+            setOpponentName("");
+            setMessage("Opponent left the room");
+          }
+        }
+
+      });
       join_reducer({roomCode:room.roomId,playerName:playerName});
     } catch (err) {
       setError(err.message);

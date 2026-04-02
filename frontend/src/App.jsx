@@ -139,23 +139,6 @@ export default function App() {
   if (screen !== "game" || !Array.isArray(opponentBoard) || opponentBoard.length === 0) {
     return;
   }
-
-  const interval = setInterval(() => {
-    setOpponentBoard((currentBoard) => {
-      if (!Array.isArray(currentBoard) || currentBoard.length === 0) return currentBoard;
-
-      const possibleMoves = getMovableTiles(currentBoard);
-      if (!possibleMoves.length) return currentBoard;
-
-      const randomMove =
-        possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-
-      const updatedBoard = moveTile(currentBoard, randomMove);
-      setOpponentProgress(calculateProgress(updatedBoard));
-      return updatedBoard;
-    });
-  }, 2000);
-
   return () => clearInterval(interval);
   }, [screen, opponentBoard]);
 
@@ -179,12 +162,9 @@ export default function App() {
       console.log("Created room:", room);
 
       setRoomId(room.roomId);
-      console.log("Room ID:", room.roomId);
       setScreen("lobby");
-      console.log("change screen to lobby");
       const MAX_PLAYERS =2;
       create_reducer({roomCode:room.roomId,maxPlayers:MAX_PLAYERS,playerName:playerName})
-      console.log("Reducer dispatched for room creation");
     } catch (err) {
       console.error(err);
     }

@@ -3,7 +3,7 @@ import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
 import { getMovableTiles, moveTile, calculateProgress } from "./logic/gameLogic";  
 import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
-import { DbConnection, reducers } from "./module_bindings";
+import { DbConnection, reducers, tables } from "./module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export default function App() {
@@ -20,6 +20,36 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
+  
+  // Only subscribe to players table when we have a valid roomId
+  const [playersTable] = useTable(
+    roomId ? tables.player.where((q) => q.roomCode.eq(roomId)) : [],
+    {
+      onInsert: (player, reducerEvent) => {
+        console.log("Player joined:", player);
+        // Update opponent name when a new player joins (skip self)
+        if (player.playerName !== playerName) {
+          setOpponentName(player.playerName);
+        }
+      },
+      onUpdate: (oldPlayer, newPlayer, reducerEvent) => {
+        console.log("Player updated:", { oldPlayer, newPlayer });
+        // Handle player ready state changes, etc.
+        if (newPlayer.playerName !== playerName && newPlayer.playerName !== opponentName) {
+          setOpponentName(newPlayer.playerName);
+        }
+      },
+      onDelete: (player, reducerEvent) => {
+        console.log("Player left:", player);
+        // Handle when opponent leaves
+        if (player.playerName === opponentName) {
+          setOpponentName("");
+          setMessage("Opponent left the room");
+        }
+      }
+    }
+  )
+
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);
   const [opponentMoves, setOpponentMoves] = useState(0);

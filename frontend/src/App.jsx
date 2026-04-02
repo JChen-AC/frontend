@@ -1,4 +1,4 @@
-import { useState, useEffect,useMemo } from "react";
+import { useState, useEffect } from "react";
 import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
 import { getMovableTiles, moveTile, calculateProgress } from "./logic/gameLogic";  
@@ -48,59 +48,48 @@ export default function App() {
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
 
-  const gameBoardQuery = useMemo(() => {
-    if (!roomId) return null; // don't subscribe until roomId exists
-    return tables.GameBoard.where((q) => q.roomCode.eq(roomId));
-  }, [roomId]);
-
   const [gameBoardTable] = useTable(tables.GameBoard,
     {
       onUpdate: ( oldBoard, newBoard) => {
-        try{        
-          console.log("GameBoard onUpdate called", { oldBoard, newBoard, roomId });
-          if(!roomId || !newBoard) return;
-          if(playerName === newBoard.playerName) return
-          console.log("GameBoard updated");
-          console.log("Board state:", newBoard.boardState);
-          if (newBoard.boardState) {
-            const strBoard = newBoard.boardState;
-            const arrBoard = strBoard.split(',').map(Number);
-            console.log("Parsed board:", arrBoard);
-            // Update your local game state here if needed
-            setOpponentBoard(arrBoard);
-            setOpponentProgress(calculateProgress(arrBoard));
+        console.log("GameBoard onUpdate called", { oldBoard, newBoard, roomId });
+        if(!roomId || !newBoard) return;
+        if(playerName === newBoard.playerName) return; // Skip own moves
+        
+        if (newBoard.boardState) {
+          const arrBoard = newBoard.boardState.split(',').map(Number);
+          console.log("Opponent board updated:", arrBoard);
+          
+          // Update opponent board state and stats
+          setOpponentBoard(arrBoard);
+          setOpponentProgress(calculateProgress(arrBoard));
+          if (newBoard.moveCount !== undefined) {
+            setOpponentMoves(newBoard.moveCount);
           }
-        }catch (err) {
-          console.error("Failed to parse boardState:", err, newBoard);
         }
       },
-      onInsert: ( gameBoard) => {
-        try{  
-          console.log("GameBoard onInsert called", { gameBoard, roomId });
-          if(!roomId || !gameBoard) return;
-          if(playerName === gameBoard.playerName) return
-          console.log("GameBoard inserted");
-          console.log("Board state:", gameBoard.boardState);
-          if (gameBoard.boardState) {
-            const strBoard = gameBoard.boardState;
-            const arrBoard = strBoard.split(',').map(Number);
-            console.log("GameBoard inserted:", arrBoard);
-            // Update your local game state here
-            setOpponentBoard(arrBoard);
-            setOpponentProgress(calculateProgress(arrBoard));
+      onInsert: (gameBoard) => {
+        console.log("GameBoard onInsert called", { gameBoard, roomId });
+        if(!roomId || !gameBoard) return;
+        if(playerName === gameBoard.playerName) return; // Skip own moves
+        
+        if (gameBoard.boardState) {
+          const arrBoard = gameBoard.boardState.split(',').map(Number);
+          console.log("Opponent board inserted:", arrBoard);
+          
+          // Update opponent board state and stats
+          setOpponentBoard(arrBoard);
+          setOpponentProgress(calculateProgress(arrBoard));
+          if (gameBoard.moveCount !== undefined) {
+            setOpponentMoves(gameBoard.moveCount);
           }
-        }catch (err) {
-          console.error("Failed to parse boardState:", err, newBoard);
         }
       },
-      onDelete: ( gameBoard) => {
-        try{  
-          console.log("GameBoard onDelete called", { gameBoard, roomId });
-          if(!roomId || !gameBoard) return;
-          console.log("GameBoard deleted:", gameBoard.boardState);
-        }catch (err) {
-          console.error("Failed to parse boardState:", err, newBoard);
-        }
+      onDelete: (gameBoard) => {
+        console.log("GameBoard onDelete called", { gameBoard, roomId });
+        if(!roomId || !gameBoard) return;
+        console.log("GameBoard deleted:", gameBoard.boardState);
+        // Could reset opponent board here if needed
+        // setOpponentBoard([]);
       }
     }
   );
@@ -139,7 +128,7 @@ export default function App() {
         if (Array.isArray(room.board) && (!Array.isArray(sharedBoard) || sharedBoard.length === 0)) {
           setSharedBoard(room.board);
         }
-
+        
         // 只要游戏开始了，就进入 game
         if (room.gameStarted && Array.isArray(room.board) && screen !== "game") {
           setSharedBoard(room.board);
@@ -155,7 +144,7 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [roomId, playerName, sharedBoard, screen, startGame]);
-  
+  /*
   useEffect(() => {
   if (screen !== "game" || !Array.isArray(opponentBoard) || opponentBoard.length === 0) {
     return;
@@ -163,7 +152,7 @@ export default function App() {
   return () => clearInterval(interval);
   }, [screen, opponentBoard]);
 
-  
+  */
   // Demo shared board
   const demoInitialBoard = [
     1, 2, 3, 4,

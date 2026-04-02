@@ -33,39 +33,26 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
 }
 
 function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
-  const conn = useSpacetimeDB();
   const [opponentPlayerId, setOpponentPlayerId] = useState(null);
+  const [found, setFound] = useState(false); // 👈 prevents re-setting
 
-  useEffect(() => {
-    if (!conn || !roomId || !opponentName) {
-      console.log("OpponentBoardSubscriber: missing deps", { conn: !!conn, roomId, opponentName });
-      return;
+  useTable(
+    tables?.Player?.where((q) => q.roomId.eq(roomId)),
+    {
+      onInsert: (player) => {
+        if (!found && player.playerName === opponentName) {
+          setOpponentPlayerId(player.playerId);
+          setFound(true); // 👈 lock it
+        }
+      },
+      onUpdate: (oldPlayer, newPlayer) => {
+        if (!found && newPlayer.playerName === opponentName) {
+          setOpponentPlayerId(newPlayer.playerId);
+          setFound(true);
+        }
+      }
     }
-
-    // Add these to see exactly what's available
-    console.log("Full tables object:", tables);
-    console.log("tables keys:", Object.keys(tables));
-    console.log("tables.player:", tables?.player);
-    console.log("conn.db:", conn.db);
-    console.log("conn.db keys:", conn.db ? Object.keys(conn.db) : "conn.db undefined");
-
-    console.log("Looking up playerId for", opponentName, "in room", roomId);
-    console.log("All players:", [...(tables?.Player ?? [])]);
-
-      // Try different ways to read rows
-    console.log("attempt .all():", tables.Player?.all?.());
-    console.log("attempt .iter():", tables.Player?.iter?.());
-    console.log("attempt Array.from:", Array.from(tables.Player ?? []));
-
-    const allPlayers = [...(tables?.Player ?? [])];
-    const opponent = allPlayers.find(
-      (p) => p.playerName === opponentName && String(p.roomId) === String(roomId)
-    );
-
-    console.log("Found opponent:", opponent);
-    if (opponent?.playerId) setOpponentPlayerId(opponent.playerId);
-
-  }, [conn, roomId, opponentName]);
+  );
 
   return opponentPlayerId ? (
     <GameBoardSubscriber

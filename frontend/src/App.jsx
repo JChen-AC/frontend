@@ -32,6 +32,35 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
   return null;
 }
 
+function GameBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
+  // Step 1: find the opponent's player row to get their playerId
+  const [opponentPlayer] = useTable(
+    tables?.player?.where((q) => 
+      q.roomId.eq(roomId).and(q.playerName.eq(opponentName))
+    )
+  );
+
+  // Step 2: use their playerId to subscribe to their board
+  const opponentPlayerId = opponentPlayer?.[0]?.playerId;
+
+  useTable(
+    opponentPlayerId
+      ? tables?.gameboardtable?.where((q) =>
+          q.roomId.eq(roomId).and(q.playerId.eq(opponentPlayerId))
+        )
+      : null,
+    {
+      onInsert: (row) => {
+        onOpponentBoardUpdate(row.boardState, row.moveCount);
+      },
+      onUpdate: (oldRow, newRow) => {
+        onOpponentBoardUpdate(newRow.boardState, newRow.moveCount);
+      }
+    }
+  );
+
+  return null;
+}
 
 export default function App() {
   const conn = useSpacetimeDB();
@@ -251,6 +280,19 @@ export default function App() {
         <h1>1v1 15 Puzzle</h1>
       </header>
       {/* Only subscribes when roomId is set */}    
+
+      {screen === "game" && roomId && opponentName && (
+        <GameBoardSubscriber
+          roomId={roomId}
+          opponentName={opponentName}
+          onOpponentBoardUpdate={(boardState, moveCount) => {
+            setOpponentBoard(JSON.parse(boardState));
+            setOpponentProgress(calculateProgress(JSON.parse(boardState)));
+            setOpponentMoves(moveCount);
+          }}
+        />
+      )}
+
       {screen === "lobby" && (
         <LobbyScreen
           playerName={playerName}

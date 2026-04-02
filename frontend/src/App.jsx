@@ -32,35 +32,66 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
   return null;
 }
 
-function GameBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
-  // Step 1: find the opponent's player row to get their playerId
-  const [opponentPlayer] = useTable(
-    tables?.player?.where((q) => 
-      q.roomId.eq(roomId).and(q.playerName.eq(opponentName))
-    )
-  );
 
-  // Step 2: use their playerId to subscribe to their board
-  const opponentPlayerId = opponentPlayer?.[0]?.playerId;
+function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
+  const conn = useSpacetimeDB();
+  const [opponentPlayerId, setOpponentPlayerId] = useState(null);
+
+  useEffect(() => {
+    if (!conn || !roomId || !opponentName) {
+      console.log("OpponentBoardSubscriber: missing deps", { conn: !!conn, roomId, opponentName });
+      return;
+    }
+
+    console.log("OpponentBoardSubscriber: looking up playerId for", opponentName, "in room", roomId);
+
+    const players = conn.db.player
+      .where((q) => q.roomId.eq(roomId).and(q.playerName.eq(opponentName)))
+      .collect();
+
+    console.log("OpponentBoardSubscriber: player lookup result", players);
+
+    const id = players?.[0]?.playerId;
+    if (id) {
+      console.log("OpponentBoardSubscriber: found playerId", id);
+      setOpponentPlayerId(id);
+    } else {
+      console.warn("OpponentBoardSubscriber: playerId not found yet");
+    }
+
+  }, [conn, roomId, opponentName]);
+
+  return opponentPlayerId ? (
+    <GameBoardSubscriber
+      roomId={roomId}
+      opponentPlayerId={opponentPlayerId}
+      onOpponentBoardUpdate={onOpponentBoardUpdate}
+    />
+  ) : null;
+}
+
+function GameBoardSubscriber({ roomId, opponentPlayerId, onOpponentBoardUpdate }) {
+  console.log("GameBoardSubscriber: mounting with", { roomId, opponentPlayerId });
 
   useTable(
-    opponentPlayerId
-      ? tables?.gameboardtable?.where((q) =>
-          q.roomId.eq(roomId).and(q.playerId.eq(opponentPlayerId))
-        )
-      : null,
+    tables?.gameboardtable?.where((q) =>
+      q.roomId.eq(roomId).and(q.playerId.eq(opponentPlayerId))
+    ),
     {
       onInsert: (row) => {
-        onOpponentBoardUpdate(row.boardState, row.moveCount);
+        console.log("GameBoardSubscriber: board inserted", row);
+        onOpponentBoardUpdate(JSON.parse(row.boardState), row.moveCount);
       },
       onUpdate: (oldRow, newRow) => {
-        onOpponentBoardUpdate(newRow.boardState, newRow.moveCount);
+        console.log("GameBoardSubscriber: board updated", { oldRow, newRow });
+        onOpponentBoardUpdate(JSON.parse(newRow.boardState), newRow.moveCount);
       }
     }
   );
-
   return null;
 }
+
+
 
 export default function App() {
   const conn = useSpacetimeDB();
@@ -282,12 +313,13 @@ export default function App() {
       {/* Only subscribes when roomId is set */}    
 
       {screen === "game" && roomId && opponentName && (
-        <GameBoardSubscriber
+        <OpponentBoardSubscriber
           roomId={roomId}
           opponentName={opponentName}
-          onOpponentBoardUpdate={(boardState, moveCount) => {
-            setOpponentBoard(JSON.parse(boardState));
-            setOpponentProgress(calculateProgress(JSON.parse(boardState)));
+          onOpponentBoardUpdate={(board, moveCount) => {
+            console.log("App: received opponent board update", { board, moveCount });
+            setOpponentBoard(board);
+            setOpponentProgress(calculateProgress(board));
             setOpponentMoves(moveCount);
           }}
         />

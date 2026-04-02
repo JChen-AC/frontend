@@ -43,6 +43,13 @@ function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }
       return;
     }
 
+    // Add these to see exactly what's available
+    console.log("Full tables object:", tables);
+    console.log("tables keys:", Object.keys(tables));
+    console.log("tables.player:", tables?.player);
+    console.log("conn.db:", conn.db);
+    console.log("conn.db keys:", conn.db ? Object.keys(conn.db) : "conn.db undefined");
+
     console.log("OpponentBoardSubscriber: looking up playerId for", opponentName, "in room", roomId);
     const players = tables.player
       .where((q) => q.roomId.eq(roomId).and(q.playerName.eq(opponentName)))

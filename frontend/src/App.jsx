@@ -143,7 +143,7 @@ export default function App() {
   };
 
   const handleTileClick = (index) => {    
-    handleMove(index,roomId,playerName);
+    handleMove(index,roomId);
   };
 
   const handleBackToLobby = () => {

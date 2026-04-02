@@ -6,7 +6,7 @@ import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyA
 import { DbConnection, reducers, tables } from "./module_bindings";
 import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
-// Add this new component
+/*  // Add this new component
 function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave, setMessage }) {
   useTable(
     tables?.player?.where((q) => q.roomCode.eq(roomId)),
@@ -31,109 +31,7 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
   );
   return null;
 }
-
-function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
-  const [opponentPlayerId, setOpponentPlayerId] = useState(null);
-  const [found, setFound] = useState(false);
-
-  console.log("OpponentBoardSubscriber render", {
-    roomId,
-    opponentName,
-    opponentPlayerId,
-    found
-  });
-
-  useTable(
-    tables?.Player?.where((q) => q.roomId.eq(roomId)),
-    {
-      onInsert: (player) => {
-        console.log("🟢 Player INSERT:", player);
-
-        if (!found && player.playerName === opponentName) {
-          console.log("✅ Found opponent (insert):", player);
-          setOpponentPlayerId(player.playerId);
-          setFound(true);
-        }
-      },
-
-      onUpdate: (oldPlayer, newPlayer) => {
-        console.log("🟡 Player UPDATE:", { oldPlayer, newPlayer });
-
-        if (!found && newPlayer.playerName === opponentName) {
-          console.log("✅ Found opponent (update):", newPlayer);
-          setOpponentPlayerId(newPlayer.playerId);
-          setFound(true);
-        }
-      },
-
-      onDelete: (player) => {
-        console.log("🔴 Player DELETE:", player);
-      }
-    }
-  );
-
-  useEffect(() => {
-    console.log("🎯 opponentPlayerId changed:", opponentPlayerId);
-  }, [opponentPlayerId]);
-
-  if (!opponentPlayerId) {
-    console.log("⛔ Waiting for opponentPlayerId...");
-    return null;
-  }
-
-  console.log("🚀 Rendering GameBoardSubscriber with:", opponentPlayerId);
-
-  return (
-    <GameBoardSubscriber
-      roomId={roomId}
-      opponentPlayerId={opponentPlayerId}
-      onOpponentBoardUpdate={onOpponentBoardUpdate}
-    />
-  );
-}
-
-function GameBoardSubscriber({ roomId, opponentPlayerId, onOpponentBoardUpdate }) {
-  console.log("🎮 GameBoardSubscriber MOUNT", {
-    roomId,
-    opponentPlayerId
-  });
-
-  useTable(
-    tables?.GameBoard?.where((q) =>
-      q.roomId.eq(roomId).and(q.playerId.eq(opponentPlayerId))
-    ),
-    {
-      onInsert: (row) => {
-        console.log("🟢 GameBoard INSERT:", row);
-
-        try {
-          const parsed = JSON.parse(row.boardState);
-          console.log("✅ Parsed board:", parsed);
-
-          onOpponentBoardUpdate(parsed, row.moveCount);
-        } catch (err) {
-          console.error("❌ Failed to parse boardState:", row.boardState);
-        }
-      },
-
-      onUpdate: (oldRow, newRow) => {
-        console.log("🟡 GameBoard UPDATE:", newRow);
-
-        try {
-          const parsed = JSON.parse(newRow.boardState);
-          console.log("✅ Parsed updated board:", parsed);
-
-          onOpponentBoardUpdate(parsed, newRow.moveCount);
-        } catch (err) {
-          console.error("❌ Failed to parse updated boardState:", newRow.boardState);
-        }
-      }
-    }
-  );
-
-  return null;
-}
-
+*/
 
 export default function App() {
   const conn = useSpacetimeDB();
@@ -149,8 +47,46 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
-  let playerSubscription=null;
-  
+
+  const [gameBoardTable] = useTable(tables.GameBoard,
+    {
+      onUpdate: ( oldBoard, newBoard) => {
+        console.log("GameBoard onUpdate called", { oldBoard, newBoard, roomId });
+        if(!roomId || !newBoard) return;
+        if(playerName === newBoard.playerName) return
+        console.log("GameBoard updated");
+        console.log("Board state:", newBoard.boardState);
+        if (newBoard.boardState) {
+          const strBoard = newBoard.boardState;
+          const arrBoard = strBoard.split(',').map(Number);
+          console.log("Parsed board:", arrBoard);
+          // Update your local game state here if needed
+          //setOpponentBoard(arrBoard);
+          //setOpponentProgress(calculateProgress(arrBoard));
+        }
+      },
+      // onInsert: ( gameBoard) => {
+      //   console.log("GameBoard onInsert called", { gameBoard, roomId });
+      //   if(!roomId || !gameBoard) return;
+      //   if(playerName === gameBoard.playerName) return
+      //   console.log("GameBoard inserted");
+      //   console.log("Board state:", gameBoard.boardState);
+      //   if (gameBoard.boardState) {
+      //     const strBoard = gameBoard.boardState;
+      //     const arrBoard = strBoard.split(',').map(Number);
+      //     console.log("GameBoard inserted:", arrBoard);
+      //     // Update your local game state here
+      //     setOpponentBoard(arrBoard);
+      //     setOpponentProgress(calculateProgress(arrBoard));
+      //   }
+      // },
+      onDelete: ( gameBoard) => {
+        console.log("GameBoard onDelete called", { gameBoard, roomId });
+        if(!roomId || !gameBoard) return;
+        console.log("GameBoard deleted:", gameBoard.boardState);
+      }
+    }
+  );
 
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);
@@ -335,20 +271,7 @@ export default function App() {
       <header className="header">
         <h1>1v1 15 Puzzle</h1>
       </header>
-      {/* Only subscribes when roomId is set */}    
-
-      {screen === "game" && roomId && opponentName && tables?.Player && (
-        <OpponentBoardSubscriber
-          roomId={roomId}
-          opponentName={opponentName}
-          onOpponentBoardUpdate={(board, moveCount) => {
-            setOpponentBoard(board);
-            setOpponentProgress(calculateProgress(board));
-            setOpponentMoves(moveCount);
-          }}
-        />
-      )}
-
+      {/* Only subscribes when roomId is set */}
       {screen === "lobby" && (
         <LobbyScreen
           playerName={playerName}

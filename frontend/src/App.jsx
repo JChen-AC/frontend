@@ -16,6 +16,8 @@ export default function App() {
   const [opponentName, setOpponentName] = useState("");
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);
+  const [opponentMoves, setOpponentMoves] = useState(0);
+  const [opponentTime, setOpponentTime] = useState(0);
 
   const {
     board,
@@ -170,6 +172,8 @@ export default function App() {
     setWinner("");
     setOpponentBoard([]);
     setOpponentProgress(0);
+    setOpponentMoves(0);
+    setOpponentTime(0);
     setScreen("lobby");
 };
 
@@ -208,6 +212,8 @@ export default function App() {
         opponentName={opponentName}
         board={board}
         opponentBoard={opponentBoard}
+        opponentMoves={opponentMoves}
+        opponentTime={opponentTime}
         moves={moves}
         time={time}
         myProgress={progress}
@@ -284,31 +290,51 @@ function GameScreen({
   opponentBoard,
   moves,
   time,
+  opponentMoves,
+  opponentTime,
   myProgress,
   opponentProgress,
   onTileClick,
 }) {
   return (
     <div className="game-screen">
-      <div className="game-info">
-        <h2>Game Info</h2>
-        <p>Room: {roomId}</p>
-        <p>You: {playerName}</p>
-        <p>Opponent: {opponentName}</p>
-        <p>Moves: {moves}</p>
-        <p>Time: {time}s</p>
-      </div>
-
-      <ProgressBar label="Your Progress" value={myProgress} />
-      <ProgressBar label="Opponent Progress" value={opponentProgress} />
-
       <div className="boards-layout">
-        <div>
+        {/* YOUR SIDE */}
+        <div className="player-column">
+          <div className="stats-card">
+            <h2>Your Stats</h2>
+
+            <p><strong>Room:</strong> {roomId}</p>
+            <p><strong>Name:</strong> {playerName}</p>
+            <p><strong>Moves:</strong> {moves}</p>
+            <p><strong>Time:</strong> {time}s</p>
+
+            <ProgressBar label="Your Progress" value={myProgress} />
+          </div>
+
           <h2>Your Board</h2>
           <PuzzleBoard board={board} onTileClick={onTileClick} />
         </div>
 
-        <div>
+        {/* OPPONENT SIDE */}
+        <div className="player-column">
+          <div className="stats-card">
+            <h2>Opponent Stats</h2>
+
+            <p>
+              <strong>Name:</strong>{" "}
+              {opponentName || "Waiting..."}
+            </p>
+
+            <p><strong>Moves:</strong> {opponentMoves}</p>
+            <p><strong>Time:</strong> {opponentTime}s</p>
+
+            <ProgressBar
+              label="Opponent Progress"
+              value={opponentProgress}
+            />
+          </div>
+
           <h2>{opponentName || "Opponent"}'s Board</h2>
           <PuzzleBoard board={opponentBoard} small readOnly />
         </div>

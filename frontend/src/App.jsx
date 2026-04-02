@@ -23,7 +23,7 @@ export default function App() {
   
   // Only subscribe to players table when we have a valid roomId
   const [playersTable] = useTable(
-    roomId ? tables.player.where((q) => q.roomCode.eq(roomId)) : [],
+    tables.player.where((q) => q.roomCode.eq(roomId)),
     {
       onInsert: (player, reducerEvent) => {
         console.log("Player joined:", player);

@@ -15,11 +15,11 @@ const connectionBuilder = DbConnection.builder()
   .onConnect((conn, identity, token)=>{
     localStorage.setItem(TOKEN_KEY, token);
     console.log("Connected! Identity:", identity.toHexString());
-    conn.subscriptionBuilder().subscribe([
+    /*conn.subscriptionBuilder().subscribe([
       'SELECT * FROM room',
       'SELECT * FROM player',
       'SELECT * FROM GameBoard',
-    ]);
+    ]);*/
   })
     .onDisconnect(() => {
     console.log("Disconnected from SpacetimeDB");

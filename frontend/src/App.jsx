@@ -48,7 +48,10 @@ export default function App() {
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
 
-  const [gameBoardTable] = useTable(tables.GameBoard,
+  const gameBoardQuery = roomId
+  ? tables.GameBoard.where((q) => q.roomCode.eq(roomId))
+  : null;
+  const [gameBoardTable] = useTable(gameBoardQuery,
     {
       onUpdate: ( oldBoard, newBoard) => {
         try{        

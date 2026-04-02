@@ -2,7 +2,7 @@
 //const BASE_URL = "http://localhost:4000";
 const BASE_URL = import.meta.env.VITE_LOBBY_URL || "http://localhost:4000";
 
-export async function createRoom(playerName) {
+export async function createLobbyRoom(playerName) {
   const res = await fetch(`${BASE_URL}/create-room`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

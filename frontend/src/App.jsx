@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import "./styles.css";
 import { useGameLogic } from "./logic/useGameLogic";
-import { getMovableTiles, moveTile, calculateProgress } from "./logic/gameLogic";
-import { createRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
+import { getMovableTiles, moveTile, calculateProgress } from "./logic/gameLogic";  
+import { createLobbyRoom, joinRoom, markReady, getRoom } from "./services/lobbyApi";
+import { DbConnection, reducers } from "./module_bindings";
+import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export default function App() {
+  const conn = useSpacetimeDB();
+  const create_reducer = useReducer(reducers.createRoom);
+  const join_reducer = useReducer(reducers.joinRoom);
+  const ready_reducer = useReducer(reducers.setPlayerReady);
   const [screen, setScreen] = useState("lobby");
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -104,12 +110,14 @@ export default function App() {
 
       setError(""); // 👈 清掉旧错误
 
-      const room = await createRoom(playerName);
+      const room = await createLobbyRoom(playerName);
 
       console.log("Created room:", room);
 
       setRoomId(room.roomId);
       setScreen("lobby");
+      const MAX_PLAYERS =2;
+      create_reducer({roomCode:room.roomId,maxPlayers:MAX_PLAYERS,playerName:playerName})
     } catch (err) {
       console.error(err);
     }
@@ -129,6 +137,8 @@ export default function App() {
         setOpponentName(room.player1 || "");
       }
       setMessage("Joined room successfully");
+     
+      join_reducer({roomCode:room.roomId,playerName:playerName});
     } catch (err) {
       setError(err.message);
     }
@@ -150,6 +160,7 @@ export default function App() {
       setIsReady(true);
 
       if (room.gameStarted && room.board) {
+      ready_reducer({roomCode:roomId,isReady:true})        
       setSharedBoard(room.board);
       setOpponentBoard(room.board); // temporary placeholder until SpaceTimeDB
       setOpponentProgress(calculateProgress(room.board));
@@ -162,8 +173,8 @@ export default function App() {
     }
   };
 
-  const handleTileClick = (index) => {
-    handleMove(index);
+  const handleTileClick = (index) => {    
+    handleMove(index,roomId);
   };
 
   const handleBackToLobby = () => {

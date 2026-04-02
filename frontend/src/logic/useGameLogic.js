@@ -6,8 +6,12 @@ import {
   isSolved,
   calculateProgress,
 } from "./gameLogic";
+import { DbConnection, reducers } from "../module_bindings";
+import {useSpacetimeDB,useTable,useReducer} from 'spacetimedb/react'
 
 export function useGameLogic(initialBoard = null) {
+  const mark_endtime = useReducer(reducers.markPuzzleCompleted);
+  const update_db_board = useReducer(reducers.updateGameBoard);
   const [board, setBoard] = useState(
     Array.isArray(initialBoard) && initialBoard.length
       ? initialBoard
@@ -49,6 +53,7 @@ export function useGameLogic(initialBoard = null) {
     setHasStarted(false);
   };
 
+  // WHERE TIME INCREMENTS 
   useEffect(() => {
     if (!hasStarted || isFinished) return;
 
@@ -59,7 +64,7 @@ export function useGameLogic(initialBoard = null) {
     return () => clearInterval(interval);
   }, [hasStarted, isFinished]);
 
-  const handleMove = (index) => {
+  const handleMove = (index,roomCode) => {
     if (!hasStarted || isFinished) return;
 
     const newBoard = moveTile(board, index);
@@ -67,12 +72,16 @@ export function useGameLogic(initialBoard = null) {
     if (newBoard !== board) {
       setBoard(newBoard);
       setMoves((m) => m + 1);
+      update_db_board({roomCode:roomCode,boardState:board})
 
       const p = calculateProgress(newBoard);
       setProgress(p);
 
+      // Checks for solve 
       if (isSolved(newBoard)) {
         setIsFinished(true);
+        // add reducers 
+        mark_endtime();
       }
     }
   };

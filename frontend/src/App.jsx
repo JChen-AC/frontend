@@ -48,10 +48,12 @@ export default function App() {
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
 
-  const gameBoardQuery = roomId
-  ? tables.GameBoard.where((q) => q.roomCode.eq(roomId))
-  : null;
-  const [gameBoardTable] = useTable(gameBoardQuery,
+  const gameBoardQuery = useMemo(() => {
+    if (!roomId) return null; // don't subscribe until roomId exists
+    return tables.GameBoard.where((q) => q.roomCode.eq(roomId));
+  }, [roomId]);
+
+  const [gameBoardTable] = useTable(tables.GameBoard,
     {
       onUpdate: ( oldBoard, newBoard) => {
         try{        

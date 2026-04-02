@@ -226,23 +226,6 @@ export default function App() {
   if (screen !== "game" || !Array.isArray(opponentBoard) || opponentBoard.length === 0) {
     return;
   }
-
-  const interval = setInterval(() => {
-    setOpponentBoard((currentBoard) => {
-      if (!Array.isArray(currentBoard) || currentBoard.length === 0) return currentBoard;
-
-      const possibleMoves = getMovableTiles(currentBoard);
-      if (!possibleMoves.length) return currentBoard;
-
-      const randomMove =
-        possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-
-      const updatedBoard = moveTile(currentBoard, randomMove);
-      setOpponentProgress(calculateProgress(updatedBoard));
-      return updatedBoard;
-    });
-  }, 2000);
-
   return () => clearInterval(interval);
   }, [screen, opponentBoard]);
 

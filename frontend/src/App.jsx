@@ -22,34 +22,31 @@ export default function App() {
   const [opponentName, setOpponentName] = useState("");
   let playerSubscription=null;
   
-  /*// Only subscribe to players table when we have a valid roomId
-  const [playersTable] = useTable(
+  // Add this new component
+function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave, setMessage }) {
+  useTable(
     tables.player.where((q) => q.roomCode.eq(roomId)),
     {
-      onInsert: (player, reducerEvent) => {
-        console.log("Player joined:", player);
-        // Update opponent name when a new player joins (skip self)
+      onInsert: (player) => {
         if (player.playerName !== playerName) {
-          setOpponentName(player.playerName);
+          onOpponentJoin(player.playerName);
         }
       },
-      onUpdate: (oldPlayer, newPlayer, reducerEvent) => {
-        console.log("Player updated:", { oldPlayer, newPlayer });
-        // Handle player ready state changes, etc.
-        if (newPlayer.playerName !== playerName && newPlayer.playerName !== opponentName) {
-          setOpponentName(newPlayer.playerName);
+      onUpdate: (oldPlayer, newPlayer) => {
+        if (newPlayer.playerName !== playerName) {
+          onOpponentJoin(newPlayer.playerName);
         }
       },
-      onDelete: (player, reducerEvent) => {
-        console.log("Player left:", player);
-        // Handle when opponent leaves
-        if (player.playerName === opponentName) {
-          setOpponentName("");
+      onDelete: (player) => {
+        if (player.playerName !== playerName) {
+          onOpponentLeave();
           setMessage("Opponent left the room");
         }
       }
     }
-  )*/
+  );
+  return null;
+}
 
   const [opponentBoard, setOpponentBoard] = useState([]);
   const [opponentProgress, setOpponentProgress] = useState(0);
@@ -168,10 +165,10 @@ export default function App() {
         setOpponentName(room.player1 || "");
       }
       setMessage("Joined room successfully");
-      
+
       join_reducer({roomCode:room.roomId,playerName:playerName});
 
-      playerSubscription = conn.subscribe(tables?.player?.where((q) => q.roomCode.eq(roomId)), {
+      /*playerSubscription = conn.subscribe(tables?.player?.where((q) => q.roomCode.eq(roomId)), {
         onInsert: (player, reducerEvent) => {console.log("Player joined:", player);
           if (player.playerName !== playerName) {
             setOpponentName(player.playerName);
@@ -189,7 +186,7 @@ export default function App() {
           }
         }
 
-      });
+      }); */
     } catch (err) {
       setError(err.message);
     }
@@ -251,7 +248,16 @@ export default function App() {
       <header className="header">
         <h1>1v1 15 Puzzle</h1>
       </header>
-
+      {/* Only subscribes when roomId is set */}
+      {roomId && (
+        <PlayerSubscriber
+          roomId={roomId}
+          playerName={playerName}
+          onOpponentJoin={setOpponentName}
+          onOpponentLeave={() => setOpponentName("")}
+          setMessage={setMessage}
+        />
+      )}
       {screen === "lobby" && (
         <LobbyScreen
           playerName={playerName}

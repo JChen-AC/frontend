@@ -53,6 +53,7 @@ export default function App() {
       onUpdate: ( oldBoard, newBoard) => {
         console.log("GameBoard onUpdate called", { oldBoard, newBoard, roomId });
         if(!roomId || !newBoard) return;
+        if(playerName === newBoard.playerName) return
         console.log("GameBoard updated");
         console.log("Board state:", newBoard.boardState);
         if (newBoard.boardState) {
@@ -60,22 +61,25 @@ export default function App() {
           const arrBoard = strBoard.split(',').map(Number);
           console.log("Parsed board:", arrBoard);
           // Update your local game state here if needed
-          setSharedBoard(arrBoard);
+          //setOpponentBoard(arrBoard);
+          //setOpponentProgress(calculateProgress(arrBoard));
         }
       },
-      onInsert: ( gameBoard) => {
-        console.log("GameBoard onInsert called", { gameBoard, roomId });
-        if(!roomId || !gameBoard) return;
-        console.log("GameBoard inserted");
-        console.log("Board state:", gameBoard.boardState);
-        if (gameBoard.boardState) {
-          const strBoard = gameBoard.boardState;
-          const arrBoard = strBoard.split(',').map(Number);
-          console.log("GameBoard inserted:", arrBoard);
-          // Update your local game state here
-          setSharedBoard(arrBoard);
-        }
-      },
+      // onInsert: ( gameBoard) => {
+      //   console.log("GameBoard onInsert called", { gameBoard, roomId });
+      //   if(!roomId || !gameBoard) return;
+      //   if(playerName === gameBoard.playerName) return
+      //   console.log("GameBoard inserted");
+      //   console.log("Board state:", gameBoard.boardState);
+      //   if (gameBoard.boardState) {
+      //     const strBoard = gameBoard.boardState;
+      //     const arrBoard = strBoard.split(',').map(Number);
+      //     console.log("GameBoard inserted:", arrBoard);
+      //     // Update your local game state here
+      //     setOpponentBoard(arrBoard);
+      //     setOpponentProgress(calculateProgress(arrBoard));
+      //   }
+      // },
       onDelete: ( gameBoard) => {
         console.log("GameBoard onDelete called", { gameBoard, roomId });
         if(!roomId || !gameBoard) return;

@@ -26,6 +26,10 @@ const connectionBuilder = DbConnection.builder()
       'SELECT * FROM Room',
       'SELECT * FROM GameBoard',
     ]);
+
+    ctx.db.Player.onInsert((ctx, newPlayer) => {
+      console.log("Player table updated:", newPlayer);
+    });
   })
     .onDisconnect(() => {
     console.log("Disconnected from SpacetimeDB");
@@ -36,11 +40,8 @@ const connectionBuilder = DbConnection.builder()
     
 
 
-    ctx.db.Player.onInsert((ctx, newPlayer) => {
-      console.log("Player table updated:", newPlayer);
-    });
 
-  });
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

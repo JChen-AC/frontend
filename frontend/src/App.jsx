@@ -61,8 +61,8 @@ export default function App() {
           const arrBoard = strBoard.split(',').map(Number);
           console.log("Parsed board:", arrBoard);
           // Update your local game state here if needed
-          //setOpponentBoard(arrBoard);
-          //setOpponentProgress(calculateProgress(arrBoard));
+          setOpponentBoard(arrBoard);
+          setOpponentProgress(calculateProgress(arrBoard));
         }
       },
       onInsert: ( gameBoard) => {

@@ -32,50 +32,6 @@ function PlayerSubscriber({ roomId, playerName, onOpponentJoin, onOpponentLeave,
   return null;
 }
 
-
-function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
-  const conn = useSpacetimeDB();
-  const [opponentPlayerId, setOpponentPlayerId] = useState(null);
-
-  useEffect(() => {
-    if (!conn || !roomId || !opponentName) {
-      console.log("OpponentBoardSubscriber: missing deps", { conn: !!conn, roomId, opponentName });
-      return;
-    }
-
-    // Add these to see exactly what's available
-    console.log("Full tables object:", tables);
-    console.log("tables keys:", Object.keys(tables));
-    console.log("tables.player:", tables?.player);
-    console.log("conn.db:", conn.db);
-    console.log("conn.db keys:", conn.db ? Object.keys(conn.db) : "conn.db undefined");
-
-    console.log("OpponentBoardSubscriber: looking up playerId for", opponentName, "in room", roomId);
-    const players = tables.Player
-      .where((q) => q.roomId.eq(roomId).and(q.playerName.eq(opponentName)))
-      .collect();
-
-    console.log("OpponentBoardSubscriber: player lookup result", players);
-
-    const id = players?.[0]?.playerId;
-    if (id) {
-      console.log("OpponentBoardSubscriber: found playerId", id);
-      setOpponentPlayerId(id);
-    } else {
-      console.warn("OpponentBoardSubscriber: playerId not found yet");
-    }
-
-  }, [conn, roomId, opponentName]);
-
-  return opponentPlayerId ? (
-    <GameBoardSubscriber
-      roomId={roomId}
-      opponentPlayerId={opponentPlayerId}
-      onOpponentBoardUpdate={onOpponentBoardUpdate}
-    />
-  ) : null;
-}
-
 function OpponentBoardSubscriber({ roomId, opponentName, onOpponentBoardUpdate }) {
   const conn = useSpacetimeDB();
   const [opponentPlayerId, setOpponentPlayerId] = useState(null);

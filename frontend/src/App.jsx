@@ -38,6 +38,10 @@ export default function App() {
   const create_reducer = useReducer(reducers.createRoom);
   const join_reducer = useReducer(reducers.joinRoom);
   const ready_reducer = useReducer(reducers.setPlayerReady);
+  
+  // Get current user identity for comparison
+  const currentUserIdentity = conn?.identity;
+  
   const [screen, setScreen] = useState("lobby");
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -48,12 +52,19 @@ export default function App() {
   const [sharedBoard, setSharedBoard] = useState([]);
   const [opponentName, setOpponentName] = useState("");
 
-  const [gameBoardTable] = useTable(tables.GameBoard,
+  const [gameBoardTable] = useTable(
+      tables.GameBoard,
     {
       onUpdate: ( oldBoard, newBoard) => {
         console.log("GameBoard onUpdate called", { oldBoard, newBoard, roomId });
         if(!roomId || !newBoard) return;
-        if(playerName === newBoard.playerName) return; // Skip own moves
+        console.log("playerIdentity:", currentUserIdentity ? currentUserIdentity.toHexString() : null);
+        // Skip if this is our own move by comparing identities
+        if (currentUserIdentity && newBoard.playerId && 
+            currentUserIdentity.toHexString() === newBoard.playerId.toHexString()) {
+          console.log("Skipping own move");
+          return;
+        }
         
         if (newBoard.boardState) {
           const arrBoard = newBoard.boardState.split(',').map(Number);
@@ -70,7 +81,13 @@ export default function App() {
       onInsert: (gameBoard) => {
         console.log("GameBoard onInsert called", { gameBoard, roomId });
         if(!roomId || !gameBoard) return;
-        if(playerName === gameBoard.playerName) return; // Skip own moves
+        
+        // Skip if this is our own move by comparing identities
+        if (currentUserIdentity && gameBoard.playerId && 
+            currentUserIdentity.toHexString() === gameBoard.playerId.toHexString()) {
+          console.log("Skipping own insert");
+          return;
+        }
         
         if (gameBoard.boardState) {
           const arrBoard = gameBoard.boardState.split(',').map(Number);
